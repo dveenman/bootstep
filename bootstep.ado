@@ -84,6 +84,10 @@ program define bootstep, eclass sortpreserve
 		di as text "ERROR: Maximum number of dimensions to cluster on is two"
 		exit
 	}
+	if (`nc'==2 & "`cluster'"!=""){
+		di as text "ERROR: Fast option cannot be combined with twoway clustering yet"
+		exit
+	}
 	if (`nc'>0){
 		local clusterdim1: word 1 of `cluster'
 	}
