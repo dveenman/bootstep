@@ -267,17 +267,18 @@ program define bootstep, eclass sortpreserve
 				di ".", _continue
 			}
 
+			// Obtain combined covariance matrix:
+			matrix V=V1+V2-V3
+
+			// Small-sample correction:
 			if "`fvcheck'"=="true"{
-				local K=rowsof(V1)-1 
+				local K=rowsof(V)-1 
 			}
 			else{
-				local K=rowsof(V1) 
+				local K=rowsof(V) 
 			}
-			
-			/* Fix small sample corrections of cluster-robust variance estimators */
 			scalar factor1=(`ncluster1'/(`ncluster1'-1))*((`N'-1)/(`N'-`K'))
 			scalar factor2=(`ncluster2'/(`ncluster2'-1))*((`N'-1)/(`N'-`K'))
-			scalar factor3=(`ncluster3'/(`ncluster3'-1))*((`N'-1)/(`N'-`K'))
 				
 			if `ncluster1'<`ncluster2'{
 				scalar factormin=factor1
@@ -285,12 +286,8 @@ program define bootstep, eclass sortpreserve
 			else{
 				scalar factormin=factor2
 			}
-			matrix V1=V1/factor1
-			matrix V2=V2/factor2
-			matrix V3=V3/factor3
-
-			/* Construct twoway cluster-robust variance matrix */
-			matrix V=factormin*(V1+V2-V3)		
+			matrix V=factormin*V
+			
 		}
 		
 		if (`nc'==0){
