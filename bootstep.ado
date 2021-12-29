@@ -1,6 +1,7 @@
 *! version 1.0 20211203 David Veenman
 
-/* 
+/*
+20211229: 1.0.2		Fixed issue with fast option for twoway clustering 
 20211223: 1.0.1		Added option "fast" for much faster execution based on mata
 					Added small-sample correction to variance matrix and changed critical values based on 
 					 standard normal to t(G-1) distribution following the advise of Cameron and Miller (2015)
@@ -82,10 +83,6 @@ program define bootstep, eclass sortpreserve
 	local nc: word count `cluster'
 	if (`nc'>2){
 		di as text "ERROR: Maximum number of dimensions to cluster on is two"
-		exit
-	}
-	if (`nc'==2 & "`cluster'"!=""){
-		di as text "ERROR: Fast option cannot be combined with twoway clustering yet"
 		exit
 	}
 	if (`nc'>0){
@@ -501,6 +498,7 @@ program define bootstep, eclass sortpreserve
 					drop _cvarn_temp3
 				}
 				else{
+					sort `n'
 					mata: _bootfast_nocl(`nboot')
 				}
 				matrix V3=V
