@@ -51,20 +51,7 @@ Program options:
 
 ---
 
-Examples of output:
+The following examples show how the program can be run and how the fast option can speed up the process significantly:
 
-![image](https://user-images.githubusercontent.com/65561067/144615692-cc454959-ae79-4a40-9e5e-138c33a36eb0.png)
+![image](https://user-images.githubusercontent.com/65561067/147637181-8cbb8d45-0c7d-412d-ac8d-831ff85350c3.png)
 
----
-
-![image](https://user-images.githubusercontent.com/65561067/144615769-c49d1f8c-8fc7-44df-8ace-6f17c126e318.png)
-
----
-
-![image](https://user-images.githubusercontent.com/65561067/144615851-fcaf8989-d714-4aef-b029-8d92c76ec601.png)
-
----
-
-![image](https://user-images.githubusercontent.com/65561067/144615923-be200983-2d93-4ebe-a95f-fb962da48d7a.png)
-
----
