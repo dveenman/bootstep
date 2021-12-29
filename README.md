@@ -16,12 +16,15 @@ The program can be installed by simply saving the \*.ado file into your local St
 
 Version history and changes:
 
+  2021dec29 (version 1.0.2):
+  - fixed issue with fast option in combination with twoway clustering.
+  
   2021dec28 (version 1.0.1):
   - added option "fast" for much faster bootstrap execution using mata: the first-step regression estimates use the efficient computational algorithm of [MacKinnon (2021)](http://qed.econ.queensu.ca/pub/faculty/mackinnon/working-papers/qed_wp_1465.pdf), which speeds up the first-step estimations extremely; the second-step regression estimates cannot rely on this algorithm, but are also performed more efficiently given the use of mata functions.
   - improved inference by adding the small sample correction to the variance matrix and using critical values based on t(G-1) following [Cameron and Miller (2015)](http://cameron.econ.ucdavis.edu/research/Cameron_Miller_JHR_2015_February.pdf).
 
   2021dec03 (version 1.0.0): 
-  - first commit to Github
+  - first commit to Github.
 
 ---
 
