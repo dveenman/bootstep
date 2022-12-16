@@ -63,7 +63,19 @@ The following example shows how the program can be run and how fast it is (the p
 
 ![image](https://user-images.githubusercontent.com/65561067/208133240-be1fd921-bb7d-43d1-8e3a-bd526aa79db3.png)
 
+Example with two-way clustering:
 
+![image](https://user-images.githubusercontent.com/65561067/208135300-d392fec1-0430-46fe-9f7e-ae01768bbfe0.png)
 
+Example without clustering:
 
+![image](https://user-images.githubusercontent.com/65561067/208135369-8f63bdf8-13dc-4ec0-855f-0b451b1ec17a.png)
+
+Example absorbing fixed effects in step 2:
+
+![image](https://user-images.githubusercontent.com/65561067/208135517-8890dd02-ed23-4710-b45b-c94068db7828.png)
+
+Example absorbing fixed effects and additional factor variables in step 2:
+
+![image](https://user-images.githubusercontent.com/65561067/208135700-cbed926c-253b-4266-be8b-04e6cb90dfa9.png)
 
