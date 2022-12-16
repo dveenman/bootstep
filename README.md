@@ -77,5 +77,6 @@ Example absorbing fixed effects in step 2:
 
 Example absorbing fixed effects and additional factor variables in step 2:
 
-![image](https://user-images.githubusercontent.com/65561067/208135700-cbed926c-253b-4266-be8b-04e6cb90dfa9.png)
+![image](https://user-images.githubusercontent.com/65561067/208137139-84925b87-8e1b-4499-9842-3745eadc888d.png)
+
 
