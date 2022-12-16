@@ -59,7 +59,10 @@ Program options:
 
 ---
 
-The following examples show how the program can be run and how fast it is:
+The following example shows how the program can be run and how fast it is (the program can be tested using the test_bootstep do file). In the second-step OLS estimation with basic standard errors, the standard error of the coefficient on s_hat is too low and t-stat is too high compared to the unbiased bootstrap estimate. The screenshot also illustrates how performing 1000 bootstrap replications takes only about 4 seconds in this example:
+![image](https://user-images.githubusercontent.com/65561067/208133240-be1fd921-bb7d-43d1-8e3a-bd526aa79db3.png)
+
+
 
 
 
