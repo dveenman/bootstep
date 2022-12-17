@@ -836,7 +836,6 @@ mata:
             X2b=X2[bsample_n,.]
             y2b=y2[bsample_n,.]
             ivarb=ivar[bsample_n,.]
-            n2=rows(bsample_n)
             // First-step estimation:            
             beta1=invsym(cross(Xb,Xb))*cross(Xb,yb)
             fit1=Xb*beta1
@@ -972,6 +971,7 @@ mata:
             yb=y[p,.]
             X2b=X2[p,.]
             y2b=y2[p,.]
+            ivarb=ivar[p,.]
             // First-step estimation:
             bstep1=invsym(cross(Xb,Xb))*cross(Xb,yb)
             fit1=Xb*bstep1

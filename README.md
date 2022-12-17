@@ -65,7 +65,7 @@ The following example shows how the program can be run and how fast it is (the p
 
 ---
 
-The following output illustrates the biasedness and unbiasedness of the OLS and bootstrapped standard errors, respectively. These results can be replicated using the **test_bootstep_sim.do** file. Compared to the true standard errors (derived from the standard deviations of the 1000 coefficient estimates), the OLS standard errors are too low and the bootstrapped standard errors are very close. This results in type 1 error rates of ... and ... , respectively, based on a significant level of 0.05:
+The following output illustrates the biasedness and unbiasedness of the OLS and bootstrapped standard errors, respectively. These results can be replicated using the **test_bootstep_sim.do** file. Compared to the true standard errors (derived from the standard deviations of the coefficient estimates from 1000 simulated samples), the OLS standard errors are too low and the bootstrapped standard errors are very close. This results in type 1 error rates of 0.165 and 0.045, respectively, based on a significant level of 0.05:
 
 
 
