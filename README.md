@@ -59,21 +59,35 @@ Program options:
 
 ---
 
-The following example shows how the program can be run and how fast it is (the program can be tested using the test_bootstep do file). In the second-step OLS estimation with basic standard errors, the standard error of the coefficient on s_hat is too low and t-stat is too high compared to the unbiased bootstrap estimate. The screenshot also illustrates how performing 1000 bootstrap replications takes only about 4 seconds in this example:
+The following example shows how the program can be run and how fast it is (the program can be tested using the **test_bootstep.do** file). In the second-step OLS estimation with basic standard errors, the standard error of the coefficient on s_hat is too low and t-stat is too high compared to the unbiased bootstrap estimate. The screenshot also illustrates how performing 1000 bootstrap replications takes only about 4 seconds in this example:
 
 ![image](https://user-images.githubusercontent.com/65561067/208133240-be1fd921-bb7d-43d1-8e3a-bd526aa79db3.png)
+
+---
+
+The following output illustrates the biasedness and unbiasedness of the OLS and bootstrapped standard errors, respectively. These results can be replicated using the **test_bootstep_sim.do** file. Compared to the true standard errors (derived from the standard deviations of the 1000 coefficient estimates), the OLS standard errors are too low and the bootstrapped standard errors are very close. This results in type 1 error rates of ... and ... , respectively, based on a significant level of 0.05:
+
+
+
+---
 
 Example with two-way clustering:
 
 ![image](https://user-images.githubusercontent.com/65561067/208135300-d392fec1-0430-46fe-9f7e-ae01768bbfe0.png)
 
+---
+
 Example without clustering:
 
 ![image](https://user-images.githubusercontent.com/65561067/208135369-8f63bdf8-13dc-4ec0-855f-0b451b1ec17a.png)
 
+---
+
 Example absorbing fixed effects in step 2:
 
 ![image](https://user-images.githubusercontent.com/65561067/208135517-8890dd02-ed23-4710-b45b-c94068db7828.png)
+
+---
 
 Example absorbing fixed effects and additional factor variables in step 2:
 

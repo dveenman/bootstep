@@ -976,10 +976,11 @@ mata:
             bstep1=invsym(cross(Xb,Xb))*cross(Xb,yb)
             fit1=Xb*bstep1
             // Second-step estimation:
-            X2b=(X2b,fit1,J(n,1,1))
-            bstep2=invsym(cross(X2b,X2b))*cross(X2b,y2b)
-            beta2=(beta2 \ bstep2')            
-            
+            X2b=(X2b,fit1)
+            S = mm_areg(y2b, ivarb, X2b, 1, 1)
+            bstep2 = mm_areg_b(S)
+            beta2=(beta2 \ bstep2')
+ 
             _bootcounter(b, B, bcounter, bcounter2, pct)
 
         }
