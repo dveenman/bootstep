@@ -1,6 +1,7 @@
-*! version 1.1.0 20221216 David Veenman
+*! version 1.1.1 20230106 David Veenman
 
 /*
+20230106: 1.1.1     Minor update: changed reference for standardization option
 20221216: 1.1.0     Major improvements:
                      - Changed default to fast Mata estimation
                      - Absorb option in step 2 now also works with Mata estimation
@@ -602,9 +603,9 @@ program define bootstep, eclass sortpreserve
         
             di ""
             if `"`standardize'"'!=""{
-                loc url "https://doi.org/10.1016/j.jfineco.2016.02.013"
+                loc url "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=4310933"
                 local message "Note: coefficient on generated regressor is standardized following"
-                di as text `"`message' {browse "`url'":Hou and Loh (2016, JFE).}"'
+                di as text `"`message' {browse "`url'":Cascino, Szeles, and Veenman (2022).}"'
             }
         }
         else{
@@ -709,9 +710,9 @@ program define bootstep, eclass sortpreserve
                     
             di ""
             if `"`standardize'"'!=""{
-                loc url "https://doi.org/10.1016/j.jfineco.2016.02.013"
+                loc url "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=4310933"
                 local message "Note: coefficient on generated regressor is standardized following"
-                di as text `"`message' {browse "`url'":Hou and Loh (2016, JFE).}"'
+                di as text `"`message' {browse "`url'":Cascino, Szeles, and Veenman (2022).}"'
             }
         }
     } 
