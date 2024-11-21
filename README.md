@@ -19,6 +19,8 @@ ssc inst moremata, replace
 
 Version history and changes:
 
+  2024nov21 (version 1.2.0): Added Cameron/Gelbach/Miller (2011) adjustment for non-positive-semidefinite VCE
+  
   2023jan06 (version 1.1.1): minor update
   
   2022dec16 (version 1.1.0):
