@@ -1,6 +1,7 @@
-*! version 1.1.1 20230106 David Veenman
+*! version 1.2.0 20241118 David Veenman
 
 /*
+20241118: 1.2.0     Added Cameron/Gelbach/Miller (2011) adjustment for non-positive-semidefinite VCE (see also Gu and Yoo 2019, DOI: 10.1177/1536867X19893637) 
 20230106: 1.1.1     Minor update: changed reference for standardization option
 20221216: 1.1.0     Major improvements:
                      - Changed default to fast Mata estimation
@@ -486,6 +487,15 @@ program define bootstep, eclass sortpreserve
                 // Obtain combined covariance matrix:
                 matrix V=V1+V2-V3
 
+				mata: _check_vce()
+				if (negative==1) {
+					matrix colnames Vcadj=`indepvnames'
+					matrix rownames Vcadj=`indepvnames'	
+					matrix Vc=Vcadj
+					di ""
+					di "Note: adjustment from Cameron, Gelbach, and Miller (2011) applied to non-positive semi-definite VCE"
+				}
+				
                 // Small-sample correction:
                 if "`fvcheck'"=="true"{
                     local K=rowsof(V)-1 
@@ -605,7 +615,7 @@ program define bootstep, eclass sortpreserve
             if `"`standardize'"'!=""{
                 loc url "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=4310933"
                 local message "Note: coefficient on generated regressor is standardized following"
-                di as text `"`message' {browse "`url'":Cascino, Szeles, and Veenman (2022).}"'
+                di as text `"`message' {browse "`url'":Cascino, Szeles, and Veenman (2024).}"'
             }
         }
         else{
@@ -712,7 +722,7 @@ program define bootstep, eclass sortpreserve
             if `"`standardize'"'!=""{
                 loc url "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=4310933"
                 local message "Note: coefficient on generated regressor is standardized following"
-                di as text `"`message' {browse "`url'":Cascino, Szeles, and Veenman (2022).}"'
+                di as text `"`message' {browse "`url'":Cascino, Szeles, and Veenman (2024).}"'
             }
         }
     } 
@@ -1027,5 +1037,25 @@ mata:
             displayflush()                
         }    
     }
+
+	void _check_vce() {
+		real scalar neg
+		real matrix diag, EVEC, eval
+		
+		neg=0
+		diag=diagonal(st_matrix("Vc"))
+		for (i=1; i<=rows(diag); i++) { 
+			if (diag[i]<=0) {
+				neg=1
+			}
+		}
+		st_numscalar("negative", neg)
+		if (neg==1) {
+			// Cameron, Gelbach, and Miller (2011) adjustment from Gu and Yoo (2019, DOI: 10.1177/1536867X19893637) 
+			symeigensystem(st_matrix("Vc"), EVEC = ., eval = .)
+			eval = eval :* (eval :> 0)
+			st_matrix("Vcadj", EVEC*diag(eval)*EVEC')
+		}
+	}
     
 end
