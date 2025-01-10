@@ -109,7 +109,7 @@ Example absorbing fixed effects and additional factor variables in step 2:
 
 Additionally including first-step residuals in step 2:
 
-
+![image](https://github.com/user-attachments/assets/9c3ff996-a476-49c0-9f2c-c62211b88087)
 
 ---
 
