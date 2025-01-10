@@ -1,5 +1,5 @@
 // This code is written to test the performance of bootstep.ado
-// Version: 16dec2022 (David Veenman)
+// Version: 17dec2024 (David Veenman)
 
 	clear all
 	set seed 1234
@@ -67,6 +67,6 @@
 	bootstep s x1 | y i.year x2 x3 x4 x5, nboot(1000) cluster(industry) absorb(firm) seed(1234)
 	
 	// Standardize coefficient on generated regressor:
-	bootstep s x1 | y x2 x3 x4 x5, nboot(1000) cluster(industry) standardize seed(1234)
+	bootstep s x1 | y x2 x3 x4 x5, nboot(1000) cluster(industry) residual seed(1234)
 	
 	

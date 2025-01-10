@@ -19,6 +19,8 @@ ssc inst moremata, replace
 
 Version history and changes:
 
+  2024dec17 (version 1.2.1): Added residual option to include first-step residuals in second-stage estimation and removed standardize option
+  
   2024nov21 (version 1.2.0): Added Cameron/Gelbach/Miller (2011) adjustment for non-positive-semidefinite VCE
   
   2023jan06 (version 1.1.1): minor update
@@ -56,7 +58,7 @@ Program options:
 - **cluster(varlist)** (optional): allows for bootstrap estimation of cluster-robust standard errors in one or two dimensions. 
 - **logit** (optional): allows the first step to be estimated using logit (provided the first-step dependent variable is an indicator variable); the first-step fitted values are transformed into predicted probabilities.
 - **absorb** (optional): allows for one dimension of fixed effects to be absorbed in the second-step estimation.
-- **standardize** (optional): standardizes the coefficient on the generated regressor in the second-step estimation to allow for a comparison with the case in which the first-step dependent variable would be included directly as an independent variable in the second-step estimation. The standardization is based on equation (6) of [Cascino, Szeles, and Veenman (2022)](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=4310933).
+- **residual** (optional): additionally include first-step residuals as variable in second-step estimation.
 - **seed** (optional): sets the seed to ensure reproducibility of the results. Not required but highly recommended when seed is not set outside of the program.
 
 ---
@@ -105,9 +107,10 @@ Example absorbing fixed effects and additional factor variables in step 2:
 
 ---
 
-Example illustrating the standardization of coefficient on generated regressor:
+Additionally including first-step residuals in step 2:
 
-![image](https://user-images.githubusercontent.com/65561067/211011212-83ea4c74-8004-462d-b829-31937e892e3a.png)
 
+
+---
 
 

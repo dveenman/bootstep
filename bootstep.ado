@@ -1,6 +1,8 @@
-*! version 1.2.0 20241118 David Veenman
+*! version 1.2.1 20241217 David Veenman
 
 /*
+20241217: 1.2.1     Add residual option to include first-step residuals in second-stage estimation
+                    Removed standardize option
 20241118: 1.2.0     Added Cameron/Gelbach/Miller (2011) adjustment for non-positive-semidefinite VCE (see also Gu and Yoo 2019, DOI: 10.1177/1536867X19893637) 
 20230106: 1.1.1     Minor update: changed reference for standardization option
 20221216: 1.1.0     Major improvements:
@@ -18,7 +20,7 @@
 */
 
 program define bootstep, eclass sortpreserve
-    syntax anything [in] [if], nboot(integer) [cluster(varlist)] [absorb(varlist)] [standardize] [logit] [seed(integer 0)]
+    syntax anything [in] [if], nboot(integer) [cluster(varlist)] [absorb(varlist)] [logit] [seed(integer 0)] [residual]
 
     capture findfile lmoremata.mlib
     if _rc>0 {
@@ -32,8 +34,8 @@ program define bootstep, eclass sortpreserve
     else{
         set seed `seed'
     }    
-    if `"`logit'"'!="" & `"`standardize'"'!="" {
-        di as text "ERROR: options <logit> and <standardize> cannot be combined: standardization only works for OLS"            
+    if `"`logit'"'!="" & `"`residual'"'!="" {
+        di as text "ERROR: options <logit> and <residual> cannot be combined: inclusion of residual in second stage only works for first-stage OLS"            
         exit
     }        
     if `"`absorb'"'!=""{
@@ -122,7 +124,7 @@ program define bootstep, eclass sortpreserve
         local clusterdim2: word 2 of `cluster'
     }
     
-    tempvar n fit res f r res_depv1 res_fit cl1 cl2
+    tempvar n fit res f r res_depv1 res_fit res_res cl1 cl2
     qui gen `n'=_n if `touse'
     qui sum `n'
     local N=r(max)
@@ -389,7 +391,12 @@ program define bootstep, eclass sortpreserve
                 local cvar "`clusterid'"
                 local y2 "`depv2'"
                 local xlist2 "`indepv2'"
-                local xlistname "`indepv2' `depv1'_hat _cons"
+				if `"`residual'"'=="" {
+					local xlistname "`indepv2' `depv1'_hat _cons"
+				}
+				else {
+					local xlistname "`indepv2' `depv1'_hat `depv1'_res _cons"
+				}
 
                 di  ""
                 di as text "Performing bootstrap resampling... (B=`nboot')"
@@ -430,7 +437,12 @@ program define bootstep, eclass sortpreserve
                 local cvar "`clusterid1'"
                 local y2 "`depv2'"
                 local xlist2 "`indepv2'"
-                local xlistname "`indepv2' `depv1'_hat _cons"
+				if `"`residual'"'=="" {
+					local xlistname "`indepv2' `depv1'_hat _cons"
+				}
+				else {
+					local xlistname "`indepv2' `depv1'_hat `depv1'_res _cons"
+				}
 
                 // First dimension:
                 di  ""
@@ -518,24 +530,7 @@ program define bootstep, eclass sortpreserve
                 matrix colnames V =`xlistname'
                 matrix rownames V =`xlistname'    
             }
-                
-            /* For standardization of fit coefficient */
-            if `"`standardize'"'!=""{
-                qui reg `depv1' `indepv1' if `touse'
-                qui predict `fit' if `touse' & `depv1'!=., xb
-                qui `est' `depv1' `indepv2', `feoption'
-                qui predict `res_depv1', res
-                qui `est' `fit' `indepv2', `feoption'
-                qui predict `res_fit', res
-                qui sum `res_depv1'
-                qui scalar v1=r(Var)
-                qui sum `res_fit'
-                qui scalar v2=r(Var)
-                qui `est' `depv2' `indepv2' `fit'  if `touse' & `depv1'!=., `feoption'
-                matrix coef=e(b)
-                matrix colnames coef=`indepv2' "`depv1'_hat" "_cons"
-            }
-        
+                   
             ereturn clear
             tempname b V
             matrix `b' = b
@@ -551,27 +546,6 @@ program define bootstep, eclass sortpreserve
             ereturn local depvar "`depv2'"
             eret local vcetype "Bootstrap"
             
-            if `"`standardize'"'!=""{
-                matrix b=e(b)'
-                local dim=rowsof(b)
-                matrix coef[1,`dim'-1]=coef[1,`dim'-1]*(v2/v1)
-                matrix V[`dim'-1,`dim'-1]=V[`dim'-1,`dim'-1]*(v2/v1)^2
-                ereturn clear
-                tempname b V
-                matrix `b' = coef
-                matrix `V' = V
-                ereturn post `b' `V'
-                ereturn scalar N=e_N
-                ereturn scalar r2=e_r2
-                ereturn scalar r2_a=e_r2_a
-                if ("`absorb'"!=""){
-                    ereturn scalar r2_within=e_r2_w
-                }
-                ereturn scalar df_r=e_df_r
-                ereturn local depvar "`depv2'"
-                eret local vcetype "Bootstrap"
-            }
-
             di " " 
             if (`nc'==0){
                 di as text "Two-step estimator with bootstrapped standard errors" 
@@ -612,18 +586,18 @@ program define bootstep, eclass sortpreserve
             ereturn display        
         
             di ""
-            if `"`standardize'"'!=""{
-                loc url "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=4310933"
-                local message "Note: coefficient on generated regressor is standardized following"
-                di as text `"`message' {browse "`url'":Cascino, Szeles, and Veenman (2024).}"'
-            }
         }
         else{
             local y "`depv1'"
             local xlist "`indepv1'"
             local y2 "`depv2'"
             local xlist2 "`indepv2'"
-            local xlistname "`indepv2' `depv1'_hat _cons"
+            if `"`residual'"'=="" {
+                local xlistname "`indepv2' `depv1'_hat _cons"
+            }
+            else {
+                local xlistname "`indepv2' `depv1'_hat `depv1'_res _cons"
+            }
             
             di  ""
             di as text "Performing bootstrap resampling... (B=`nboot')"
@@ -645,24 +619,7 @@ program define bootstep, eclass sortpreserve
             }
             
             matrix V=(`N'/(`N'-`K'))*V
-            
-            /* For standardization of fit coefficient */
-            if `"`standardize'"'!=""{
-                qui reg `depv1' `indepv1' if `touse'
-                qui predict `fit' if `touse' & `depv1'!=., xb
-                qui `est' `depv1' `indepv2', `feoption'
-                qui predict `res_depv1', res
-                qui `est' `fit' `indepv2', `feoption'
-                qui predict `res_fit', res
-                qui sum `res_depv1'
-                qui scalar v1=r(Var)
-                qui sum `res_fit'
-                qui scalar v2=r(Var)
-                qui `est' `depv2' `indepv2' `fit'  if `touse' & `depv1'!=., `feoption'
-                matrix coef=e(b)
-                matrix colnames coef=`indepv2' "`depv1'_hat" "_cons"
-            }
-
+                       
             ereturn clear
             tempname b V
             matrix `b' = b
@@ -677,27 +634,6 @@ program define bootstep, eclass sortpreserve
             ereturn scalar df_r=`N'-`K'
             ereturn local depvar "`depv2'"
             eret local vcetype "Bootstrap"
-
-            if `"`standardize'"'!=""{
-                matrix b=e(b)'
-                local dim=rowsof(b)
-                matrix coef[1,`dim'-1]=coef[1,`dim'-1]*(v2/v1)
-                matrix V[`dim'-1,`dim'-1]=V[`dim'-1,`dim'-1]*(v2/v1)^2
-                ereturn clear
-                tempname b V
-                matrix `b' = coef
-                matrix `V' = V
-                ereturn post `b' `V'
-                ereturn scalar N=e_N
-                ereturn scalar r2=e_r2
-                ereturn scalar r2_a=e_r2_a
-                if ("`absorb'"!=""){
-                    ereturn scalar r2_within=e_r2_w
-                }
-                ereturn scalar df_r=e_df_r
-                ereturn local depvar "`depv2'"
-                eret local vcetype "Bootstrap"
-            }
             
             di " " 
             if (`nc'==0){
@@ -719,11 +655,6 @@ program define bootstep, eclass sortpreserve
             ereturn display                    
                     
             di ""
-            if `"`standardize'"'!=""{
-                loc url "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=4310933"
-                local message "Note: coefficient on generated regressor is standardized following"
-                di as text `"`message' {browse "`url'":Cascino, Szeles, and Veenman (2024).}"'
-            }
         }
     } 
 end
@@ -737,7 +668,8 @@ mata:
         st_view(y2=., ., st_local("y2"), st_local("touse"))
         st_view(X2=., ., tokens(st_local("xlist2")), st_local("touse"))
         fvc=st_numscalar("fvdum")        
-
+        residual=st_local("residual")
+ 
         n=rows(X)
         X=(X,J(n,1,1))
         
@@ -745,14 +677,22 @@ mata:
         b=XXinv*cross(X,y)
         coef=b'
         k=cols(X)
-        k2=cols(X2)+1
         
-        fit=X*coef'
-        X2fit=(X2,fit,J(n,1,1))
-        XXinv2=invsym(cross(X2fit,X2fit))
+        if(residual==""){
+			k2=cols(X2)+1
+            fit=X*coef'
+            X2fit=(X2,fit,J(n,1,1))
+        }
+        else{
+			k2=cols(X2)+2
+            fit=X*coef'
+			res=y-fit
+            X2fit=(X2,fit,res,J(n,1,1))
+        }
+        XXinv2=invsym(cross(X2fit,X2fit))    
         b2=XXinv2*cross(X2fit,y2)
-        coef2=b2'
-
+        coef2=b2'			
+	
         e=y2-X2fit*b2
         my2=colsum(y2)/n
         m=y2 :- my2
@@ -768,26 +708,50 @@ mata:
         beta2=J(0,k2+1,0)
         bcounter=0
         bcounter2=0
-        pct=0        
-        for(b=1; b<=B; b++) {
-            // Bootstrap sample:
-            bsample_n=mm_sample(nc,.,Cinfo)
-            Xb=X[bsample_n,.]
-            yb=y[bsample_n,.]
-            X2b=X2[bsample_n,.]
-            y2b=y2[bsample_n,.]
-            n2=rows(bsample_n)
-            // First-step estimation:
-            bstep1=invsym(cross(Xb,Xb))*cross(Xb,yb)
-            fit1=Xb*bstep1
-            // Second-step estimation:
-            X2b=(X2b,fit1,J(n2,1,1))
-            bstep2=invsym(cross(X2b,X2b))*cross(X2b,y2b)
-            beta2=(beta2 \ bstep2')            
+        pct=0  
+		
+        if(residual==""){		
+            for(b=1; b<=B; b++) {
+                // Bootstrap sample:
+                bsample_n=mm_sample(nc,.,Cinfo)
+                Xb=X[bsample_n,.]
+                yb=y[bsample_n,.]
+                X2b=X2[bsample_n,.]
+                y2b=y2[bsample_n,.]
+                n2=rows(bsample_n)
+                // First-step estimation:
+                bstep1=invsym(cross(Xb,Xb))*cross(Xb,yb)
+                fit1=Xb*bstep1
+                // Second-step estimation:
+                X2b=(X2b,fit1,J(n2,1,1))
+                bstep2=invsym(cross(X2b,X2b))*cross(X2b,y2b)
+                beta2=(beta2 \ bstep2')            
             
-            _bootcounter(b, B, bcounter, bcounter2, pct)
-
+                _bootcounter(b, B, bcounter, bcounter2, pct)
+            }
         }
+        else{
+            for(b=1; b<=B; b++) {
+                // Bootstrap sample:
+                bsample_n=mm_sample(nc,.,Cinfo)
+                Xb=X[bsample_n,.]
+                yb=y[bsample_n,.]
+                X2b=X2[bsample_n,.]
+                y2b=y2[bsample_n,.]
+                n2=rows(bsample_n)
+                // First-step estimation:
+                bstep1=invsym(cross(Xb,Xb))*cross(Xb,yb)
+                fit1=Xb*bstep1
+                res1=yb-fit1
+                // Second-step estimation:
+                X2b=(X2b,fit1,res1,J(n2,1,1))
+                bstep2=invsym(cross(X2b,X2b))*cross(X2b,y2b)
+                beta2=(beta2 \ bstep2')            
+            
+                _bootcounter(b, B, bcounter, bcounter2, pct)
+            }				
+        }
+			
         V=variance(beta2)
         dfr=nc-1
         st_matrix("b", coef2)
@@ -806,6 +770,7 @@ mata:
         st_view(y2=., ., st_local("y2"), st_local("touse"))
         st_view(X2=., ., tokens(st_local("xlist2")), st_local("touse"))
         fvc=st_numscalar("fvdum")        
+        residual=st_local("residual")
             
         n=rows(X)
         X=(X,J(n,1,1))
@@ -814,10 +779,18 @@ mata:
         b=XXinv*cross(X,y)
         coef=b'
         k=cols(X)
-        k2=cols(X2)+1        
         
-        fit=X*coef'
-        X2fit=(X2,fit)
+        if(residual==""){
+            k2=cols(X2)+1        
+            fit=X*coef'
+            X2fit=(X2,fit)
+        }
+        else {
+            k2=cols(X2)+2        
+            fit=X*coef'
+            res=y-fit
+            X2fit=(X2,fit,res)            
+        }
         S=mm_areg(y2, ivar, X2fit, 1, 1)
         coef2=mm_areg_b(S)'
         r2=mm_areg_r2(S)
@@ -839,26 +812,51 @@ mata:
         bcounter=0
         bcounter2=0
         pct=0
-        for(b=1; b<=B; b++) {
-            // Bootstrap sample:
-            bsample_n=mm_sample(nc,.,Cinfo)
-            Xb=X[bsample_n,.]
-            yb=y[bsample_n,.]
-            X2b=X2[bsample_n,.]
-            y2b=y2[bsample_n,.]
-            ivarb=ivar[bsample_n,.]
-            // First-step estimation:            
-            beta1=invsym(cross(Xb,Xb))*cross(Xb,yb)
-            fit1=Xb*beta1
-            // Second-step estimation:    
-            X2b=(X2b,fit1)
-            S = mm_areg(y2b, ivarb, X2b, 1, 1)
-            bstep2 = mm_areg_b(S)
-            beta2=(beta2 \ bstep2')
+        
+        if(residual==""){		
+            for(b=1; b<=B; b++) {
+                // Bootstrap sample:
+                bsample_n=mm_sample(nc,.,Cinfo)
+                Xb=X[bsample_n,.]
+                yb=y[bsample_n,.]
+                X2b=X2[bsample_n,.]
+                y2b=y2[bsample_n,.]
+                ivarb=ivar[bsample_n,.]
+                // First-step estimation:            
+                beta1=invsym(cross(Xb,Xb))*cross(Xb,yb)
+                fit1=Xb*beta1
+                // Second-step estimation:    
+                X2b=(X2b,fit1)
+                S = mm_areg(y2b, ivarb, X2b, 1, 1)
+                bstep2 = mm_areg_b(S)
+                beta2=(beta2 \ bstep2')
 
-            _bootcounter(b, B, bcounter, bcounter2, pct)
-            
+                _bootcounter(b, B, bcounter, bcounter2, pct)   
+            }
         }
+        else {
+            for(b=1; b<=B; b++) {
+                // Bootstrap sample:
+                bsample_n=mm_sample(nc,.,Cinfo)
+                Xb=X[bsample_n,.]
+                yb=y[bsample_n,.]
+                X2b=X2[bsample_n,.]
+                y2b=y2[bsample_n,.]
+                ivarb=ivar[bsample_n,.]
+                // First-step estimation:            
+                beta1=invsym(cross(Xb,Xb))*cross(Xb,yb)
+                fit1=Xb*beta1
+                res1=yb-fit1
+                // Second-step estimation:    
+                X2b=(X2b,fit1,res1)
+                S = mm_areg(y2b, ivarb, X2b, 1, 1)
+                bstep2 = mm_areg_b(S)
+                beta2=(beta2 \ bstep2')
+
+                _bootcounter(b, B, bcounter, bcounter2, pct)   
+            }            
+        }
+        
         V=variance(beta2)
         dfr=nc-1
         st_matrix("b", coef2)
@@ -876,6 +874,7 @@ mata:
         st_view(y2=., ., st_local("y2"), st_local("touse"))
         st_view(X2=., ., tokens(st_local("xlist2")), st_local("touse"))
         fvc=st_numscalar("fvdum")        
+        residual=st_local("residual")
         
         n=rows(X)
         X=(X,J(n,1,1))
@@ -884,14 +883,22 @@ mata:
         b=XXinv*cross(X,y)
         coef=b'
         k=cols(X)
-        k2=cols(X2)+1
-        
-        fit=X*coef'
-        X2fit=(X2,fit,J(n,1,1))
-        XXinv2=invsym(cross(X2fit,X2fit))
-        b2=XXinv2*cross(X2fit,y2)
-        coef2=b2'
 
+        if(residual==""){
+			k2=cols(X2)+1
+            fit=X*coef'
+            X2fit=(X2,fit,J(n,1,1))
+        }
+        else{
+			k2=cols(X2)+2
+            fit=X*coef'
+			res=y-fit
+            X2fit=(X2,fit,res,J(n,1,1))
+        }
+        XXinv2=invsym(cross(X2fit,X2fit))    
+        b2=XXinv2*cross(X2fit,y2)
+        coef2=b2'			
+        
         e=y2-X2fit*b2
         my2=colsum(y2)/n
         m=y2 :- my2
@@ -908,23 +915,45 @@ mata:
         bcounter=0
         bcounter2=0
         pct=0
-        for(b=1; b<=B; b++) {
-            // Random sampling with replacement:
-            p=mm_sample(rows(X),rows(X))
-            Xb=X[p,.]
-            yb=y[p,.]
-            X2b=X2[p,.]
-            y2b=y2[p,.]
-            // First-step estimation:
-            bstep1=invsym(cross(Xb,Xb))*cross(Xb,yb)
-            fit1=Xb*bstep1
-            // Second-step estimation:
-            X2b=(X2b,fit1,J(n,1,1))
-            bstep2=invsym(cross(X2b,X2b))*cross(X2b,y2b)
-            beta2=(beta2 \ bstep2')            
-            
-            _bootcounter(b, B, bcounter, bcounter2, pct)
-
+        
+        if(residual==""){		
+            for(b=1; b<=B; b++) {
+                // Random sampling with replacement:
+                p=mm_sample(rows(X),rows(X))
+                Xb=X[p,.]
+                yb=y[p,.]
+                X2b=X2[p,.]
+                y2b=y2[p,.]
+                // First-step estimation:
+                bstep1=invsym(cross(Xb,Xb))*cross(Xb,yb)
+                fit1=Xb*bstep1
+                // Second-step estimation:
+                X2b=(X2b,fit1,J(n,1,1))
+                bstep2=invsym(cross(X2b,X2b))*cross(X2b,y2b)
+                beta2=(beta2 \ bstep2')            
+                
+                _bootcounter(b, B, bcounter, bcounter2, pct)
+            }
+        }
+        else {
+            for(b=1; b<=B; b++) {
+                // Random sampling with replacement:
+                p=mm_sample(rows(X),rows(X))
+                Xb=X[p,.]
+                yb=y[p,.]
+                X2b=X2[p,.]
+                y2b=y2[p,.]
+                // First-step estimation:
+                bstep1=invsym(cross(Xb,Xb))*cross(Xb,yb)
+                fit1=Xb*bstep1
+                res1=yb-fit1
+                // Second-step estimation:
+                X2b=(X2b,fit1,res1,J(n,1,1))
+                bstep2=invsym(cross(X2b,X2b))*cross(X2b,y2b)
+                beta2=(beta2 \ bstep2')            
+                
+                _bootcounter(b, B, bcounter, bcounter2, pct)
+            }          
         }
         V=variance(beta2)
         st_matrix("b", coef2)
@@ -941,6 +970,7 @@ mata:
         st_view(X2=., ., tokens(st_local("xlist2")), st_local("touse"))
         st_view(ivar=., ., tokens(st_local("ivar")), st_local("touse"))
         fvc=st_numscalar("fvdum")        
+        residual=st_local("residual")
                 
         n=rows(X)
         X=(X,J(n,1,1))
@@ -949,10 +979,18 @@ mata:
         b=XXinv*cross(X,y)
         coef=b'
         k=cols(X)
-        k2=cols(X2)+1
         
-        fit=X*coef'
-        X2fit=(X2,fit)
+        if(residual==""){
+            k2=cols(X2)+1        
+            fit=X*coef'
+            X2fit=(X2,fit)
+        }
+        else {
+            k2=cols(X2)+2        
+            fit=X*coef'
+            res=y-fit
+            X2fit=(X2,fit,res)            
+        }
         
         S=mm_areg(y2, ivar, X2fit, 1, 1)
         coef2=mm_areg_b(S)'
@@ -975,26 +1013,51 @@ mata:
         bcounter=0
         bcounter2=0
         pct=0
-        for(b=1; b<=B; b++) {
-            // Random sampling with replacement:
-            p=mm_sample(rows(X),rows(X))
-            Xb=X[p,.]
-            yb=y[p,.]
-            X2b=X2[p,.]
-            y2b=y2[p,.]
-            ivarb=ivar[p,.]
-            // First-step estimation:
-            bstep1=invsym(cross(Xb,Xb))*cross(Xb,yb)
-            fit1=Xb*bstep1
-            // Second-step estimation:
-            X2b=(X2b,fit1)
-            S = mm_areg(y2b, ivarb, X2b, 1, 1)
-            bstep2 = mm_areg_b(S)
-            beta2=(beta2 \ bstep2')
- 
-            _bootcounter(b, B, bcounter, bcounter2, pct)
-
+        
+        if(residual==""){		
+            for(b=1; b<=B; b++) {
+                // Random sampling with replacement:
+                p=mm_sample(rows(X),rows(X))
+                Xb=X[p,.]
+                yb=y[p,.]
+                X2b=X2[p,.]
+                y2b=y2[p,.]
+                ivarb=ivar[p,.]
+                // First-step estimation:
+                bstep1=invsym(cross(Xb,Xb))*cross(Xb,yb)
+                fit1=Xb*bstep1
+                // Second-step estimation:
+                X2b=(X2b,fit1)
+                S = mm_areg(y2b, ivarb, X2b, 1, 1)
+                bstep2 = mm_areg_b(S)
+                beta2=(beta2 \ bstep2')
+     
+                _bootcounter(b, B, bcounter, bcounter2, pct)
+            }
         }
+        else {
+            for(b=1; b<=B; b++) {
+                // Random sampling with replacement:
+                p=mm_sample(rows(X),rows(X))
+                Xb=X[p,.]
+                yb=y[p,.]
+                X2b=X2[p,.]
+                y2b=y2[p,.]
+                ivarb=ivar[p,.]
+                // First-step estimation:
+                bstep1=invsym(cross(Xb,Xb))*cross(Xb,yb)
+                fit1=Xb*bstep1
+                res1=yb-fit1
+                // Second-step estimation:
+                X2b=(X2b,fit1,res1)
+                S = mm_areg(y2b, ivarb, X2b, 1, 1)
+                bstep2 = mm_areg_b(S)
+                beta2=(beta2 \ bstep2')
+     
+                _bootcounter(b, B, bcounter, bcounter2, pct)
+            }            
+        }
+        
         V=variance(beta2)
         st_matrix("b", coef2)
         st_matrix("V", V) 
